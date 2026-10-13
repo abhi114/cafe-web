@@ -13,8 +13,22 @@ mobileNav.querySelectorAll('a').forEach(link => link.addEventListener('click', (
 document.addEventListener('keydown', event => { if (event.key === 'Escape') setMenu(false); });
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Safety fallback: if GSAP fails to load, remove the intro overlay after 4 seconds
+// so it never blocks the page content.
+const introFallbackTimer = setTimeout(() => {
+  const intro = document.querySelector('.intro');
+  if (intro && intro.parentNode) {
+    intro.style.transition = 'opacity 0.4s ease';
+    intro.style.opacity = '0';
+    setTimeout(() => intro.remove(), 420);
+    console.warn('[Noir Café] Intro fallback triggered — GSAP animation did not complete in time.');
+  }
+}, 4000);
+
 if (window.gsap && window.ScrollTrigger && !prefersReducedMotion) {
   gsap.registerPlugin(ScrollTrigger);
+  clearTimeout(introFallbackTimer); // Cancel the fallback; GSAP is running normally
   const intro = gsap.timeline({ defaults: { ease: 'power3.out' } });
   intro.from('.intro-mark', { y: 80, opacity: 0, duration: .85 })
     .to('.intro-line', { width: 90, duration: .55 }, '-=.3')
@@ -32,5 +46,11 @@ if (window.gsap && window.ScrollTrigger && !prefersReducedMotion) {
   gsap.utils.toArray('.reveal-image').forEach(el => gsap.from(el, { y: 70, opacity: 0, duration: 1.15, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 88%', once: true } }));
   gsap.to('.scroll-line', { width: '100%', ease: 'none', scrollTrigger: { trigger: document.documentElement, start: 'top top', end: 'bottom bottom', scrub: .3 } });
 } else {
-  document.querySelector('.intro').remove();
+  if (!window.gsap) {
+    console.warn('[Noir Café] GSAP did not load — animations are disabled. Check CDN/network connectivity.');
+  } else if (!window.ScrollTrigger) {
+    console.warn('[Noir Café] ScrollTrigger did not load — scroll animations are disabled.');
+  }
+  const introEl = document.querySelector('.intro');
+  if (introEl) introEl.remove();
 }
