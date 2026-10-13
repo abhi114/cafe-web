@@ -26,10 +26,15 @@ const introFallbackTimer = setTimeout(() => {
   }
 }, 4000);
 
-if (window.gsap && window.ScrollTrigger && !prefersReducedMotion) {
-  gsap.registerPlugin(ScrollTrigger);
+// Detect GSAP globals — the CDN UMD build exposes `gsap` and `ScrollTrigger`
+// as top-level globals, not necessarily as window.gsap / window.ScrollTrigger.
+const _gsap = typeof gsap !== 'undefined' ? gsap : (typeof window.gsap !== 'undefined' ? window.gsap : null);
+const _ST = typeof ScrollTrigger !== 'undefined' ? ScrollTrigger : (typeof window.ScrollTrigger !== 'undefined' ? window.ScrollTrigger : null);
+
+if (_gsap && _ST && !prefersReducedMotion) {
+  _gsap.registerPlugin(_ST);
   clearTimeout(introFallbackTimer); // Cancel the fallback; GSAP is running normally
-  const intro = gsap.timeline({ defaults: { ease: 'power3.out' } });
+  const intro = _gsap.timeline({ defaults: { ease: 'power3.out' } });
   intro.from('.intro-mark', { y: 80, opacity: 0, duration: .85 })
     .to('.intro-line', { width: 90, duration: .55 }, '-=.3')
     .from('.intro-caption', { y: 12, opacity: 0, duration: .5 }, '-=.25')
@@ -40,15 +45,15 @@ if (window.gsap && window.ScrollTrigger && !prefersReducedMotion) {
     .from('.hero-line > span', { yPercent: 105, duration: 1.1, stagger: .12, ease: 'power4.out' }, '-=.4')
     .from('.hero-bottom', { y: 25, opacity: 0, duration: .7 }, '-=.55');
 
-  gsap.to('.hero-image', { scale: 1, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
-  gsap.to('.space-image', { yPercent: 10, ease: 'none', scrollTrigger: { trigger: '.space-section', start: 'top bottom', end: 'bottom top', scrub: true } });
-  gsap.utils.toArray('.reveal').forEach(el => gsap.from(el, { y: 70, opacity: 0, duration: 1.1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 86%', once: true } }));
-  gsap.utils.toArray('.reveal-image').forEach(el => gsap.from(el, { y: 70, opacity: 0, duration: 1.15, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 88%', once: true } }));
-  gsap.to('.scroll-line', { width: '100%', ease: 'none', scrollTrigger: { trigger: document.documentElement, start: 'top top', end: 'bottom bottom', scrub: .3 } });
+  _gsap.to('.hero-image', { scale: 1, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+  _gsap.to('.space-image', { yPercent: 10, ease: 'none', scrollTrigger: { trigger: '.space-section', start: 'top bottom', end: 'bottom top', scrub: true } });
+  _gsap.utils.toArray('.reveal').forEach(el => _gsap.from(el, { y: 70, opacity: 0, duration: 1.1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 86%', once: true } }));
+  _gsap.utils.toArray('.reveal-image').forEach(el => _gsap.from(el, { y: 70, opacity: 0, duration: 1.15, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 88%', once: true } }));
+  _gsap.to('.scroll-line', { width: '100%', ease: 'none', scrollTrigger: { trigger: document.documentElement, start: 'top top', end: 'bottom bottom', scrub: .3 } });
 } else {
-  if (!window.gsap) {
+  if (!_gsap) {
     console.warn('[Noir Café] GSAP did not load — animations are disabled. Check CDN/network connectivity.');
-  } else if (!window.ScrollTrigger) {
+  } else if (!_ST) {
     console.warn('[Noir Café] ScrollTrigger did not load — scroll animations are disabled.');
   }
   const introEl = document.querySelector('.intro');
